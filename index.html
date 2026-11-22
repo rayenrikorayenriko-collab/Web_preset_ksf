@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="color-scheme" content="light" />
+<meta name="theme-color" content="#ffffff" />
+<title>Kessoku Family</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="app.css" />
+</head>
+<body>
+
+<!-- ================= SPRITE IKON (vector, bukan emoji keyboard) ================= -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-settings-sliders" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h8M16 18h4"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="14" cy="18" r="2"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2.4"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M20.5 15l-4.8-4.8L5 21"/></symbol>
+    <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2.4"/><path d="M8 3v18M16 3v18M3 8.5h18M3 15.5h18"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6.5" y="5" width="3.4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="14.1" y="5" width="3.4" height="14" rx="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4.6A1.6 1.6 0 0 1 9.6 3h4.8A1.6 1.6 0 0 1 16 4.6V6"/><path d="M18.4 6l-.9 13.1a2 2 0 0 1-2 1.9H8.5a2 2 0 0 1-2-1.9L5.6 6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 2.5l9 4.7-9 4.7-9-4.7z"/><path d="M3 12.3l9 4.7 9-4.7"/><path d="M3 16.8l9 4.7 9-4.7"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M22 19.2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3.5" y="10.5" width="17" height="10.5" rx="2.2"/><path d="M7.5 10.5V7a4.5 4.5 0 0 1 9 0v3.5"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6"/><path d="M10 21.5h4"/><path d="M12 2.5a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1v.7h6v-.7c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2.5z"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h7"/></symbol>
+    <symbol id="i-headphones" viewBox="0 0 24 24"><path d="M3.5 17.5v-5a8.5 8.5 0 0 1 17 0v5"/><path d="M20.5 18.5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-2.6a2 2 0 0 1 2-2h3z"/><path d="M3.5 18.5a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-2.6a2 2 0 0 0-2-2h-3z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  </defs>
+</svg>
+
+<!-- ====== WEB 1 : tampilan member ====== -->
+<div class="page-progress" aria-hidden="true"><span id="progressFill"></span></div>
+<header class="nav" id="nav">
+  <a class="brand" href="#top">
+    <img id="brandLogo" class="brand-logo hidden" alt="" />
+    <span id="brandName" class="brand-name">Kessoku Family</span>
+  </a>
+  <nav class="nav-links">
+    <a href="#kategori">Kategori</a>
+    <a href="#musik">Musik</a>
+    <button id="openSettings" class="nav-admin">
+      <svg class="ic" aria-hidden="true"><use href="#i-settings-sliders"/></svg>
+      <span>Setting</span>
+    </button>
+  </nav>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <h1 id="heroTitle" class="hero-title">Kessoku Family</h1>
+    <p id="heroTagline" class="hero-tagline"></p>
+    <p id="heroDesc" class="hero-desc"></p>
+    <div class="hero-actions">
+      <a class="btn primary" href="#kategori">
+        Jelajahi Preview
+        <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg>
+      </a>
+      <a class="btn ghost" href="#musik">
+        <svg class="ic" aria-hidden="true"><use href="#i-music"/></svg>
+        Rekomendasi Musik
+      </a>
+    </div>
+  </section>
+
+  <section id="kategori" class="cat-bar-wrap">
+    <div class="cat-bar">
+      <span class="cat-bar-label">Kategori</span>
+      <div id="catBar" class="cat-bar-scroll"></div>
+    </div>
+  </section>
+
+  <!-- Banner (maksimal 1, format 16:9) — tepat di bawah bar kategori -->
+  <section id="bannerSection" class="banner-section hidden">
+    <div id="bannerWrap"></div>
+  </section>
+
+  <section id="sections" class="sections"></section>
+
+  <section id="musik" class="music-section">
+    <div class="section-head reveal">
+      <h2 class="with-ic">
+        <svg class="ic" aria-hidden="true"><use href="#i-music"/></svg>
+        Rekomendasi Musik
+      </h2>
+      <p>Putar cuplikan lagunya, atau download langsung ke perangkatmu (MP3).</p>
+    </div>
+    <div id="musicList" class="music-list"></div>
+    <p id="musicEmpty" class="empty hidden">Belum ada musik.</p>
+  </section>
+</main>
+
+<footer class="footer"><span id="footerText">© Kessoku Family</span></footer>
+
+<!-- ====== LOGIN (khusus admin) ====== -->
+<div id="loginModal" class="modal hidden" aria-hidden="true">
+  <form id="loginForm" class="modal-card narrow" autocomplete="off">
+    <div class="login-logo"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></div>
+    <h3>Panel Setting</h3>
+    <p class="login-sub">Halaman ini khusus admin &amp; owner Kessoku Family.</p>
+    <input id="loginPass" type="password" placeholder="Password admin" autocomplete="current-password" required />
+    <span id="loginErr" class="login-err"></span>
+    <div class="modal-foot">
+      <button type="button" id="loginCancel" class="btn">Batal</button>
+      <button type="submit" class="btn primary">Masuk</button>
+    </div>
+  </form>
+</div>
+
+<!-- ====== WEB 2 : panel setting (overlay) ====== -->
+<div id="adminPanel" class="app hidden" aria-hidden="true">
+  <aside class="sidebar">
+    <div class="side-brand"><span class="mark"><svg class="ic"><use href="#i-layers"/></svg></span><span>Panel Setting</span></div>
+    <nav id="sideNav">
+      <button data-tab="settings" class="active"><svg class="ic"><use href="#i-settings-sliders"/></svg> Pengaturan Situs</button>
+      <button data-tab="categories"><svg class="ic"><use href="#i-folder"/></svg> Kategori</button>
+      <button data-tab="previews"><svg class="ic"><use href="#i-film"/></svg> Preview &amp; Tombol</button>
+      <button data-tab="banners"><svg class="ic"><use href="#i-image"/></svg> Banner</button>
+      <button data-tab="music"><svg class="ic"><use href="#i-music"/></svg> Musik</button>
+    </nav>
+    <div class="side-foot">
+      <span id="liveDot" class="live"><i></i> Menyambung...</span>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <h1 id="topTitle">Pengaturan Situs</h1>
+      <div class="topbar-tools">
+        <span id="saveState" class="save-state"></span>
+        <div class="admin-actions">
+          <button id="closeAdmin" class="admin-action"><svg class="ic"><use href="#i-x"/></svg> Tutup panel</button>
+          <button id="logout" class="admin-action logout"><svg class="ic"><use href="#i-lock"/></svg> Keluar admin</button>
+        </div>
+      </div>
+    </header>
+    <div id="panel" class="panel"></div>
+  </main>
+</div>
+
+<!-- ====== modal edit (dipakai panel) ====== -->
+<div id="modal" class="modal hidden" aria-hidden="true">
+  <div class="modal-card">
+    <div class="modal-head"><h3 id="modalTitle">Edit</h3><button id="modalClose" class="x" aria-label="Tutup"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <div id="modalBody" class="modal-body"></div>
+    <div class="modal-foot">
+      <button id="modalCancel" class="btn">Batal</button>
+      <button id="modalSave" class="btn primary">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
