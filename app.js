@@ -19,6 +19,17 @@ const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, {
 });
 const TABLE = 'kf_data';
 
+/* ---------------- motion: GSAP (ScrollTrigger) + Lenis ---------------- */
+const REDUCED = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+const HAS_GSAP = !REDUCED && !!(window.gsap && window.ScrollTrigger);
+const HAS_LENIS = !REDUCED && !!window.Lenis;
+let lenis = null, motionReady = false;
+const stInstances = [];
+if (HAS_GSAP) {
+  window.gsap.registerPlugin(window.ScrollTrigger);
+  document.documentElement.classList.add('gsap-ready', 'motion-pending');
+}
+
 function defaults() {
   return {
     settings: {
@@ -62,14 +73,27 @@ function showLayer(el) {
   el.setAttribute('aria-hidden', 'false');
   el.classList.remove('is-open');
   requestAnimationFrame(() => el.classList.add('is-open'));
+  syncScrollLock();
 }
 function hideLayer(el) {
   clearTimeout(layerTimers.get(el));
   el.classList.remove('is-open');
   el.setAttribute('aria-hidden', 'true');
   layerTimers.set(el, setTimeout(() => {
-    if (!el.classList.contains('is-open')) el.classList.add('hidden');
+    if (!el.classList.contains('is-open')) { el.classList.add('hidden'); syncScrollLock(); }
   }, 260));
+}
+
+/* kalau ada overlay terbuka: kunci scroll halaman + hentikan Lenis */
+function anyLayerOpen() {
+  return ['#loginModal', '#adminPanel', '#modal'].some((s) => {
+    const el = $(s); return el && !el.classList.contains('hidden');
+  });
+}
+function syncScrollLock() {
+  const open = anyLayerOpen();
+  document.body.classList.toggle('no-scroll', open);
+  if (lenis) { open ? lenis.stop() : lenis.start(); }
 }
 
 /* =========================================================
@@ -102,7 +126,10 @@ function renderPublic() {
   document.documentElement.style.setProperty('--accent', s.accentColor || '#111114');
   document.title = s.siteTitle || 'Kessoku Family';
   $('#brandName').textContent = s.siteTitle || 'Kessoku Family';
-  $('#heroTitle').textContent = s.siteTitle || 'Kessoku Family';
+  /* judul hero: hanya tulis ulang kalau teksnya berubah (biar animasi per kata tetap utuh) */
+  const titleTxt = s.siteTitle || 'Kessoku Family';
+  const ht = $('#heroTitle');
+  if (ht && ht.dataset.txt !== titleTxt) { ht.dataset.txt = titleTxt; ht.textContent = titleTxt; ht.dataset.split = ''; }
   $('#heroTagline').textContent = s.siteTagline || '';
   $('#heroDesc').textContent = s.siteDescription || '';
   $('#footerText').textContent = s.footerText || ('© ' + (s.siteTitle || 'Kessoku Family'));
@@ -112,6 +139,7 @@ function renderPublic() {
 
   renderBanners(); renderCategories(); renderMusic();
   observeReveal();
+  scheduleMotion();
 }
 
 /* Banner: maksimal satu, format tampil 16:9, di bawah bar kategori */
@@ -138,7 +166,7 @@ function renderCategories() {
     cats.map((c) => `<button class="chip" data-target="cat-${esc(c.id)}">${esc(c.name)}</button>`).join('');
   bar.querySelectorAll('.chip').forEach((ch) => ch.addEventListener('click', () => {
     bar.querySelectorAll('.chip').forEach((x) => x.classList.remove('active')); ch.classList.add('active');
-    const el = document.getElementById(ch.dataset.target); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const el = document.getElementById(ch.dataset.target); if (el) goTo(el, -134);
   }));
   const wrap = $('#sections');
   if (!cats.length) { wrap.innerHTML = `<p class="empty lined">Belum ada kategori. Admin bisa menambahkannya dari panel Setting.</p>`; return; }
@@ -146,9 +174,34 @@ function renderCategories() {
     const items = (DB.previews || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0)).filter((p) => p.categoryId === c.id);
     const cards = items.length ? items.map((p, i) => cardHTML(p, i)).join('') : `<p class="empty lined">Belum ada preview di kategori ini.</p>`;
     return `<section id="cat-${esc(c.id)}" class="section-block">
-      <div class="section-head reveal"><h2>${esc(c.name)}</h2>${c.description ? `<p>${esc(c.description)}</p>` : ''}</div>
-      <div class="grid">${cards}</div></section>`;
+      <div class="section-head reveal"><h2 class="split">${esc(c.name)}</h2>${c.description ? `<p>${esc(c.description)}</p>` : ''}</div>
+      <div class="rail-wrap">
+        <button class="rail-nav prev" type="button" data-rail="prev" aria-label="Geser ke kiri">${ic('arrow-left')}</button>
+        <div class="rail" data-lenis-prevent>${cards}</div>
+        <button class="rail-nav next" type="button" data-rail="next" aria-label="Geser ke kanan">${ic('arrow')}</button>
+      </div></section>`;
   }).join('');
+  wireRails(wrap);
+}
+
+/* tombol geser (prev/next) untuk setiap baris preview */
+function wireRails(scope) {
+  scope.querySelectorAll('.rail-wrap').forEach((wrap) => {
+    const rail = wrap.querySelector('.rail');
+    if (!rail) return;
+    const prev = wrap.querySelector('.rail-nav.prev'), next = wrap.querySelector('.rail-nav.next');
+    const step = () => Math.max(240, rail.clientWidth * 0.82);
+    if (prev) prev.addEventListener('click', () => rail.scrollBy({ left: -step(), behavior: 'smooth' }));
+    if (next) next.addEventListener('click', () => rail.scrollBy({ left: step(), behavior: 'smooth' }));
+    const upd = () => {
+      const max = rail.scrollWidth - rail.clientWidth;
+      if (prev) prev.classList.toggle('is-off', rail.scrollLeft <= 4);
+      if (next) next.classList.toggle('is-off', max <= 3 || rail.scrollLeft >= max - 4);
+    };
+    rail.addEventListener('scroll', upd, { passive: true });
+    window.addEventListener('resize', upd, { passive: true });
+    upd();
+  });
 }
 function cardHTML(p, i) {
   const m = p.media || {};
@@ -218,7 +271,11 @@ function observeReveal() { $$('.reveal:not(.in)').forEach((el) => io.observe(el)
 /* =========================================================
    LOGIN + PANEL SETTING (Web 2)
    ========================================================= */
-function openLogin() { $('#loginErr').textContent = ''; showLayer($('#loginModal')); setTimeout(() => $('#loginPass').focus(), 80); }
+function openLogin() {
+  $('#loginErr').textContent = '';
+  showLayer($('#loginModal'));
+  setTimeout(() => $('#loginPass').focus(), 80);
+}
 function closeLogin() { hideLayer($('#loginModal')); $('#loginPass').value = ''; }
 
 $('#openSettings').addEventListener('click', ensureAuth);
@@ -226,13 +283,21 @@ $('#loginCancel').addEventListener('click', closeLogin);
 $('#loginModal').addEventListener('click', (e) => { if (e.target.id === 'loginModal') closeLogin(); });
 $('#loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const pass = $('#loginPass').value; if (!pass) return;
+  const email = String(CFG.adminEmail || '').trim();
+  const pass = $('#loginPass').value;
   $('#loginErr').textContent = '';
+  if (!email) { $('#loginErr').textContent = 'Email admin belum diatur di config.js'; return; }
+  if (!pass) return;
   const btn = $('#loginForm button[type=submit]');
   btn.disabled = true;
   try {
-    const { error } = await sb.auth.signInWithPassword({ email: CFG.adminEmail, password: pass });
-    if (error) throw new Error(error.message === 'Invalid login credentials' ? 'Password salah' : error.message);
+    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) {
+      const m = error.message || '';
+      if (m === 'Invalid login credentials') throw new Error('Password salah atau akun admin di config.js tidak cocok dengan Supabase.');
+      if (/not confirmed/i.test(m)) throw new Error('User belum dikonfirmasi. Di Supabase, buka user itu -> Confirm / aktifkan Auto Confirm.');
+      throw new Error(m);
+    }
     closeLogin(); await openAdmin();
   } catch (err) { $('#loginErr').textContent = err.message || 'Gagal masuk'; }
   finally { btn.disabled = false; }
@@ -273,7 +338,13 @@ function renderPanel() {
 function bindPanel() {
   if (activeTab === 'settings') {
     $('#saveSettings').addEventListener('click', saveSettings);
-    $('#s-logo-up').addEventListener('click', () => pickUpload((info) => { if (info.url) { $('#s-logo').value = info.url; toast('Logo siap, jangan lupa Simpan'); } }, 'image/*'));
+    $('#s-logo-up').addEventListener('click', () => pickUpload((info) => {
+      if (info.url) {
+        $('#s-logo').value = info.url;
+        $('#s-logo-status').textContent = 'Logo siap: ' + info.name;
+        toast('Logo siap, jangan lupa Simpan');
+      }
+    }, 'image/*'));
   }
   if (activeTab === 'categories') $('#addCat').addEventListener('click', () => openCategoryEditor(null));
   if (activeTab === 'previews') $('#addPreview').addEventListener('click', () => openPreviewEditor(null));
@@ -308,8 +379,9 @@ function viewSettings() {
       <div class="field"><label>Warna Aksen</label><input id="s-accent" type="color" value="${esc(s.accentColor || '#111114')}" /></div>
       <div class="field"><label>Teks Footer</label><input id="s-footer" type="text" value="${esc(s.footerText)}" /></div>
     </div>
-    <div class="field"><label>Logo <span class="sub">— URL atau upload (opsional)</span></label>
-      <input id="s-logo" type="text" value="${esc(s.logoUrl)}" placeholder="https://..." />
+    <div class="field"><label>Logo <span class="sub">— opsional, URL file disimpan otomatis</span></label>
+      <input id="s-logo" type="hidden" value="${esc(s.logoUrl)}" />
+      <p id="s-logo-status" class="sub">${s.logoUrl ? 'Logo sudah tersimpan.' : 'Belum ada logo.'}</p>
       <div class="uploader" id="s-logo-up">${ic('upload')} Upload logo (png/jpg)</div>
     </div>
     <button class="btn primary" id="saveSettings">${ic('save')} Simpan Pengaturan</button>
@@ -363,7 +435,7 @@ function viewBanners() {
       <button class="btn primary" id="editBanner">${ic(b ? 'pencil' : 'plus')} ${b ? 'Edit Banner' : 'Tambah Banner'}</button>
     </div>
     <div class="banner-preview">${prev}</div>
-    ${b ? `<div class="grid-hint">${ic('bulb')} ${esc(b.title || '(tanpa judul)')}${b.link ? ' — ' + esc(b.link) : ''}</div>
+    ${b ? `<div class="grid-hint">${ic('bulb')} ${esc(b.title || '(tanpa judul)')}${b.link ? ' · Tautan aktif' : ''}</div>
       <div style="margin-top:14px"><button class="btn small danger" data-del="banners" data-id="${b.id}">${ic('trash')} Hapus banner</button></div>` : ''}
   </div>`;
 }
@@ -693,6 +765,101 @@ async function pollOnce() {
 }
 
 /* =========================================================
+   MOTION — GSAP/ScrollTrigger (judul per kata) + Lenis (smooth scroll)
+   Ringan & hormat pada "prefers-reduced-motion".
+   ========================================================= */
+function splitWords(el) {
+  if (el.dataset.split === '1') return Array.from(el.querySelectorAll('.wd-i'));
+  const text = (el.textContent || '').trim();
+  if (!text) return [];
+  el.dataset.split = '1';
+  el.innerHTML = text.split(/\s+/)
+    .map((w) => `<span class="wd"><span class="wd-i">${esc(w)}</span></span>`).join(' ');
+  return Array.from(el.querySelectorAll('.wd-i'));
+}
+
+/* scroll halus ke sebuah elemen (lewat Lenis kalau ada) */
+function goTo(el, offset) {
+  if (!el) return;
+  const y = el.getBoundingClientRect().top + window.scrollY + (offset || 0);
+  if (lenis) lenis.scrollTo(y, { duration: 1.1 });
+  else window.scrollTo({ top: y, behavior: 'smooth' });
+}
+
+function initLenis() {
+  if (!HAS_LENIS) return;
+  lenis = new window.Lenis({
+    duration: 1.05,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    smoothWheel: true,
+    wheelMultiplier: 1,
+    touchMultiplier: 1.6
+  });
+  if (HAS_GSAP) {
+    lenis.on('scroll', window.ScrollTrigger.update);
+    window.gsap.ticker.add((time) => lenis.raf(time * 1000));
+    window.gsap.ticker.lagSmoothing(0);
+  } else {
+    const raf = (t) => { lenis.raf(t); requestAnimationFrame(raf); };
+    requestAnimationFrame(raf);
+  }
+}
+
+/* animasi judul: muncul per kata saat masuk viewport */
+function animateHeading(el) {
+  const g = window.gsap, ST = window.ScrollTrigger;
+  const words = splitWords(el);
+  if (!words.length) return;
+  g.set(words, { yPercent: 120, opacity: 0 });
+  document.documentElement.classList.remove('motion-pending');
+  const run = () => g.to(words, { yPercent: 0, opacity: 1, duration: .85, ease: 'power3.out', stagger: .08, overwrite: true });
+  stInstances.push(ST.create({ trigger: el, start: 'top 92%', once: true, onEnter: run }));
+}
+
+function buildMotion() {
+  if (!HAS_GSAP) { motionReady = true; return; }
+  const g = window.gsap, ST = window.ScrollTrigger;
+  /* buang trigger yang elemennya sudah tidak ada di DOM */
+  for (let i = stInstances.length - 1; i >= 0; i--) {
+    if (!document.contains(stInstances[i].trigger)) { stInstances[i].kill(); stInstances.splice(i, 1); }
+  }
+  /* judul per kata */
+  $$('h1.hero-title, .split').forEach((h) => { if (h.dataset.split !== '1') animateHeading(h); });
+  /* barang yang muncul saat discroll */
+  [['.section-head', 30], ['.rail .card', 40], ['.track', 24], ['.banner-item', 28], ['.music-section .empty', 20]].forEach(([sel, y]) => {
+    $$(sel).forEach((el) => {
+      if (el.dataset.motion === '1') return;
+      el.dataset.motion = '1';
+      g.set(el, { y, opacity: 0 });
+      stInstances.push(ST.create({
+        trigger: el, start: 'top 90%', once: true,
+        onEnter: () => g.to(el, { y: 0, opacity: 1, duration: .7, ease: 'power3.out', overwrite: true })
+      }));
+    });
+  });
+  motionReady = true;
+  ST.refresh();
+}
+let stTimer = 0;
+function scheduleMotion() {
+  if (!HAS_GSAP) return;
+  clearTimeout(stTimer);
+  stTimer = setTimeout(() => { if (motionReady || !lenis) buildMotion(); }, 60);
+}
+
+/* tautan anchor (#...) lewat Lenis biar mulus */
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('a[href^="#"]');
+  if (!a) return;
+  const href = a.getAttribute('href');
+  if (!href || href === '#') return;
+  const target = document.querySelector(href);
+  if (!target) return;
+  e.preventDefault();
+  goTo(target, -74);
+});
+
+/* =========================================================
    INIT
    ========================================================= */
 let progressFrame = 0;
@@ -717,10 +884,15 @@ async function boot() {
     $('#sections').innerHTML = `<p class="empty lined">Gagal memuat data. Pastikan tabel &amp; bucket Supabase sudah dibuat (lihat setup.sql). Detail: ${esc(e.message || e)}</p>`;
   }
   renderPublic();
+  initLenis();
+  buildMotion();
   observeReveal();
   updatePageProgress();
   subscribe();
   setInterval(pollOnce, 20000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) pollOnce(); });
+  window.addEventListener('load', () => { if (HAS_GSAP) window.ScrollTrigger.refresh(); });
+  setTimeout(() => document.documentElement.classList.remove('motion-pending'), 2500);
+  syncScrollLock();
 }
 boot();
