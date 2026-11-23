@@ -8,6 +8,14 @@ const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = (sec) => { if (!sec && sec !== 0) return '0:00'; sec = Math.max(0, Math.floor(sec)); return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); };
+const trackFilename = (track) => ((track.title || 'musik').replace(/[\\/:*?"<>|]/g, '').trim() || 'musik') + '.mp3';
+function forceDownloadUrl(url, filename) {
+  try {
+    const out = new URL(url, window.location.href);
+    out.searchParams.set('download', filename);
+    return out.toString();
+  } catch (e) { return url; }
+}
 const ic = (n, cls) => `<svg class="ic${cls ? ' ' + cls : ''}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const uid = (p) => (p || 'id') + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -182,6 +190,7 @@ function renderCategories() {
       </div></section>`;
   }).join('');
   wireRails(wrap);
+  wireVideoControls(wrap);
 }
 
 /* tombol geser (prev/next) untuk setiap baris preview */
@@ -203,16 +212,45 @@ function wireRails(scope) {
     upd();
   });
 }
+function wireVideoControls(scope) {
+  scope.querySelectorAll('.video-media').forEach((frame) => {
+    const video = frame.querySelector('video');
+    const button = frame.querySelector('[data-media-toggle]');
+    if (!video || !button) return;
+    const sync = () => {
+      const playing = !video.paused && !video.ended;
+      frame.classList.toggle('is-playing', playing);
+      button.innerHTML = ic(playing ? 'pause' : 'play');
+      button.setAttribute('aria-label', playing ? 'Jeda preview' : 'Putar preview');
+      button.title = playing ? 'Jeda preview' : 'Putar preview';
+    };
+    button.addEventListener('click', async () => {
+      if (video.paused) {
+        scope.querySelectorAll('.video-media video').forEach((other) => {
+          if (other !== video) other.pause();
+        });
+        try { await video.play(); }
+        catch (e) { toast('Video preview tidak bisa diputar.'); }
+      } else video.pause();
+      sync();
+    });
+    video.addEventListener('play', sync);
+    video.addEventListener('pause', sync);
+    video.addEventListener('ended', sync);
+    sync();
+  });
+}
 function cardHTML(p, i) {
   const m = p.media || {};
   let media = `<div class="placeholder">${ic('image')}<span>Belum ada media</span></div>`;
-  if (m.url && m.type === 'video') media = `<video src="${esc(m.url)}" controls playsinline preload="metadata"${m.poster ? ` poster="${esc(m.poster)}"` : ''}></video>`;
+  if (m.url && m.type === 'video') media = `<video src="${esc(m.url)}" playsinline preload="metadata"${m.poster ? ` poster="${esc(m.poster)}"` : ''}></video>
+    <button class="media-toggle" type="button" data-media-toggle aria-label="Putar preview" title="Putar preview">${ic('play')}</button>`;
   else if (m.url) media = `<img src="${esc(m.url)}" alt="${esc(p.title)}" loading="lazy" />`;
   const btns = (p.buttons || []).filter((b) => b && b.label)
     .map((b, k) => `<a class="card-btn${k % 2 ? ' alt' : ''}" href="${esc(b.url || '#')}" target="_blank" rel="noopener">${esc(b.label)}${ic('arrow')}</a>`).join('');
   const ratio = p.size && p.size !== 'auto' ? p.size.replace(':', '/') : '';
   return `<article class="card" style="animation-delay:${Math.min(i * 60, 400)}ms">
-    <div class="card-media${ratio ? ' ratio' : ''}"${ratio ? ` style="aspect-ratio:${ratio}"` : ''}>${media}</div>
+    <div class="card-media${ratio ? ' ratio' : ''}${m.url && m.type === 'video' ? ' video-media' : ''}"${ratio ? ` style="aspect-ratio:${ratio}"` : ''}>${media}</div>
     <div class="card-body">
       <h3 class="card-title">${esc(p.title || 'Tanpa judul')}</h3>
       ${p.description ? `<p class="card-desc">${esc(p.description)}</p>` : ''}
@@ -233,7 +271,7 @@ function renderMusic() {
         <div class="track-progress" data-act="seek"><span></span></div>
       </div>
       <span class="track-time" data-time>${fmt(t.duration)}</span>
-      <a class="dl-btn" href="${esc(t.url)}" target="_blank" rel="noopener" download="${esc((t.title || 'musik').replace(/[\\/:*?"<>|]/g, '') + '.mp3')}">${ic('download')} MP3</a>
+      <a class="dl-btn" href="${esc(forceDownloadUrl(t.url, trackFilename(t)))}" download="${esc(trackFilename(t))}">${ic('download')} Download MP3</a>
     </div>`).join('');
   list.querySelectorAll('.track').forEach((row) => {
     const track = music.find((x) => x.id === row.dataset.id);

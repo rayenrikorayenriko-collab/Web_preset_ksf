@@ -170,6 +170,15 @@ svg.ic{width:1.05em;height:1.05em;flex:0 0 auto;fill:none;stroke:currentColor;st
 .card-media img,.card-media video{width:100%;height:100%;display:block;object-fit:contain;transition:transform .7s var(--ease)}
 .card:hover .card-media img,.card:hover .card-media video{transform:scale(1.01)}
 .card-media.ratio img,.card-media.ratio video{height:100%;width:100%;object-fit:contain}
+.media-toggle{position:absolute;z-index:2;top:50%;left:50%;width:64px;height:64px;transform:translate(-50%,-50%);
+  display:grid;place-items:center;border:1px solid rgba(255,255,255,.78);border-radius:50%;
+  background:rgba(255,255,255,.92);color:#111114;box-shadow:0 8px 24px rgba(0,0,0,.18);
+  cursor:pointer;transition:width .2s var(--ease),height .2s var(--ease),transform .2s var(--ease),background .2s,opacity .2s}
+.media-toggle svg.ic{width:22px;height:22px}
+.media-toggle:hover{background:#fff;transform:translate(-50%,-50%) scale(1.06)}
+.video-media.is-playing .media-toggle{top:auto;left:auto;right:12px;bottom:12px;width:44px;height:44px;transform:none;opacity:.92}
+.video-media.is-playing .media-toggle:hover{transform:scale(1.06);opacity:1}
+.video-media.is-playing .media-toggle svg.ic{width:17px;height:17px}
 .card-media .placeholder{width:100%;aspect-ratio:16/9;display:grid;place-items:center;gap:8px;color:var(--muted);font-size:13.5px;
   background:linear-gradient(135deg,#fafafb,#f2f2f4)}
 .card-body{padding:20px;display:flex;flex-direction:column;gap:12px;flex:1;min-width:0}
@@ -209,7 +218,7 @@ svg.ic{width:1.05em;height:1.05em;flex:0 0 auto;fill:none;stroke:currentColor;st
 .icon-btn:hover{transform:scale(1.06);border-color:var(--ink);box-shadow:var(--shadow-sm)}
 .icon-btn.play{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .dl-btn{display:inline-flex;align-items:center;gap:7px;padding:10px 15px;border-radius:10px;font-weight:700;font-size:12.5px;
-  background:#fff;border:1px solid var(--line-strong);color:var(--ink);transition:.2s;white-space:nowrap}
+  background:#fff;border:1px solid var(--line-strong);color:var(--ink);transition:.2s;white-space:nowrap;cursor:pointer}
 .dl-btn:hover{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .dl-btn svg.ic{width:14px;height:14px}
 .empty{text-align:center;color:var(--muted);padding:34px;font-size:14px}
